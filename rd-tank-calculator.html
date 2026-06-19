@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RDタンク計算システム</title>
+  <meta name="description" content="RDタンクのバッチ消費シミュレーター。通常CALC（HP考慮オプション）・HPtoHP CALCの2モードに対応。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07071a;
+      --bg2: #0e0e24;
+      --card: rgba(255,255,255,0.04);
+      --card-h: rgba(255,255,255,0.07);
+      --inp: rgba(255,255,255,0.06);
+      --bdr: rgba(255,255,255,0.09);
+      --bdr-f: rgba(99,102,241,0.55);
+      --t1: #eef0ff;
+      --t2: #8b8eb0;
+      --t3: #4a4a70;
+      --a1: #6366f1;
+      --a2: #8b5cf6;
+      --a3: #a78bfa;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --err: #ef4444;
+      --ga: linear-gradient(135deg,#6366f1,#8b5cf6);
+      --gg: linear-gradient(135deg,#10b981,#059669);
+      --r: 14px; --rs: 10px; --rx: 6px;
+      --font: 'Inter','Noto Sans JP',sans-serif;
+      --mono: 'JetBrains Mono',monospace;
+      --tr: .18s cubic-bezier(.4,0,.2,1);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:14px;scroll-behavior:smooth}
+    body{
+      font-family:var(--font);
+      background-color:var(--bg);
+      color:var(--t1);
+      min-height:100vh;
+      line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
+    }
+
+    /* ── Background orbs ── */
+    .orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+    .orb{position:absolute;border-radius:50%;filter:blur(80px);animation:orbFloat 20s ease-in-out infinite}
+    .orb1{width:600px;height:600px;background:rgba(99,102,241,.07);top:-200px;left:-100px;animation-delay:0s}
+    .orb2{width:500px;height:500px;background:rgba(139,92,246,.06);bottom:-150px;right:-100px;animation-delay:-7s}
+    .orb3{width:400px;height:400px;background:rgba(16,185,129,.04);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-14s}
+    @keyframes orbFloat{
+      0%,100%{transform:translate(0,0) scale(1)}
+      33%{transform:translate(30px,-20px) scale(1.05)}
+      66%{transform:translate(-20px,30px) scale(.95)}
+    }
+
+    /* ── Header ── */
+    .hdr{
+      position:sticky;top:0;z-index:100;
+      background:rgba(7,7,26,.82);
+      backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--bdr);
+      padding:0 24px;
+    }
+    .hdr-inner{
+      max-width:1560px;margin:0 auto;height:60px;
+      display:flex;align-items:center;gap:16px;
+    }
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo-ico{
+      width:34px;height:34px;background:var(--ga);border-radius:9px;
+      display:flex;align-items:center;justify-content:center;font-size:17px;
+      box-shadow:0 0 24px rgba(99,102,241,.4);
+    }
+    .logo-txt{
+      font-size:15px;font-weight:800;letter-spacing:-.02em;
+      background:linear-gradient(135deg,#fff,var(--a3));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .logo-sub{font-size:11px;color:var(--t3);margin-top:1px}
+    .hdr-sp{flex:1}
+    .hdr-badge{
+      display:flex;align-items:center;gap:7px;
+      padding:5px 12px;border-radius:20px;
+      background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);
+      font-size:11px;color:#6ee7b7;font-weight:500;
+    }
+    .pulse{
+      width:7px;height:7px;border-radius:50%;background:var(--ok);
+      box-shadow:0 0 8px var(--ok);animation:pulse 2s infinite;
+    }
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+    /* ── Layout ── */
+    .wrap{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:20px 24px;display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start}
+
+    /* ── Card ── */
+    .card{
+      background:var(--card);border:1px solid var(--bdr);
+      border-radius:var(--r);backdrop-filter:blur(14px);
+      box-shadow:0 4px 24px rgba(0,0,0,.35);
+      transition:border-color var(--tr);
+    }
+    .card:hover{border-color:rgba(255,255,255,.14)}
+    .card-hd{
+      padding:16px 20px 12px;border-bottom:1px solid var(--bdr);
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .card-ttl{
+      font-size:11px;font-weight:600;color:var(--t2);
+      text-transform:uppercase;letter-spacing:.09em;
+      display:flex;align-items:center;gap:7px;
+    }
+    .ttl-ico{
+      width:20px;height:20px;border-radius:5px;
+      display:flex;align-items:center;justify-content:center;font-size:11px;
+    }
+    .card-bd{padding:18px 20px}
+
+    /* ── Mode Tabs (2 tabs) ── */
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+    .tab{
+      padding:12px 8px;border:1px solid var(--bdr);border-radius:var(--rs);
+      background:var(--inp);color:var(--t2);font-size:11px;font-weight:500;
+      font-family:var(--font);cursor:pointer;text-align:center;
+      transition:all var(--tr);display:flex;flex-direction:column;align-items:center;gap:4px;
+    }
+    .tab-ico{font-size:20px}
+    .tab-nm{font-weight:700;font-size:13px}
+    .tab-ds{font-size:9px;color:var(--t3);margin-top:1px}
+    .tab:hover{background:var(--card-h);border-color:rgba(99,102,241,.35);color:var(--t1)}
+    .tab.on{
+      background:rgba(99,102,241,.12);border-color:var(--a1);color:var(--t1);
+      box-shadow:0 0 22px rgba(99,102,241,.14);
+    }
+    .tab.on .tab-nm{background:var(--ga);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+    /* ── Form ── */
+    .sec{margin-bottom:18px}
+    .sec-ttl{
+      font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;
+      letter-spacing:.1em;margin-bottom:11px;display:flex;align-items:center;gap:8px;
+    }
+    .sec-ttl::after{content:'';flex:1;height:1px;background:var(--bdr)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .fg{display:flex;flex-direction:column;gap:5px}
+    .fg.full{grid-column:1/-1}
+    label{font-size:11px;font-weight:500;color:var(--t2);display:flex;align-items:center;gap:4px}
+    .unit{color:var(--t3);font-weight:400}
+    input[type=number],input[type=datetime-local],input[type=text]{
+      width:100%;padding:7px 11px;
+      background:var(--inp);border:1px solid var(--bdr);
+      border-radius:var(--rx);color:var(--t1);
+      font-size:12px;font-family:var(--font);
+      transition:all var(--tr);outline:none;
+    }
+    input:focus{border-color:var(--bdr-f);background:rgba(99,102,241,.05);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+    input[type=number]{font-family:var(--mono)}
+    input::placeholder{color:var(--t3)}
+    input[type=datetime-local]{color-scheme:dark}
+
+    /* ── Checkbox option row ── */
+    .opt-row{
+      display:flex;align-items:flex-start;gap:10px;
+      padding:11px 14px;
+      background:rgba(99,102,241,.07);
+      border:1px solid rgba(99,102,241,.18);
+      border-radius:var(--rs);
+      cursor:pointer;
+      transition:all var(--tr);
+      margin-bottom:4px;
+    }
+    .opt-row:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.3)}
+    .opt-row.active{background:rgba(99,102,241,.16);border-color:var(--a1);box-shadow:0 0 14px rgba(99,102,241,.12)}
+    .opt-chk{
+      width:18px;height:18px;border:2px solid var(--bdr);border-radius:5px;
+      background:var(--inp);flex-shrink:0;margin-top:1px;
+      display:flex;align-items:center;justify-content:center;
+      transition:all var(--tr);
+    }
+    .opt-row.active .opt-chk{background:var(--a1);border-color:var(--a1)}
+    .opt-chk-mark{display:none;color:#fff;font-size:11px;font-weight:900}
+    .opt-row.active .opt-chk-mark{display:block}
+    .opt-txt{}
+    .opt-ttl{font-size:12px;font-weight:600;color:var(--t1)}
+    .opt-sub{font-size:10px;color:var(--t2);margin-top:2px}
+
+    /* subsection that appears when checkbox on */
+    .sub-sec{display:none;margin-top:12px;padding:12px;background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.12);border-radius:var(--rs)}
+    .sub-sec.vis{display:block;animation:slideIn .18s ease}
+
+    /* ── Dynamic rows ── */
+    .dyn-list{display:flex;flex-direction:column;gap:7px}
+    .dyn-row{display:flex;align-items:center;gap:7px;animation:slideIn .18s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+    .row-num{
+      min-width:26px;height:22px;border-radius:5px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;font-family:var(--mono);
+      background:rgba(99,102,241,.18);color:var(--a3);
+      border:1px solid rgba(99,102,241,.28);flex-shrink:0;
+    }
+    .dyn-row input{flex:1;padding:6px 9px;font-size:12px}
+    .btn-del{
+      width:26px;height:26px;border-radius:5px;
+      border:1px solid var(--bdr);background:var(--inp);color:var(--t2);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:14px;transition:all var(--tr);flex-shrink:0;
+    }
+    .btn-del:hover{background:rgba(239,68,68,.14);border-color:var(--err);color:var(--err)}
+    .btn-add{
+      width:100%;padding:7px;border:1px dashed var(--bdr);
+      border-radius:var(--rx);background:transparent;color:var(--t3);
+      font-size:11px;font-family:var(--font);cursor:pointer;
+      transition:all var(--tr);display:flex;align-items:center;justify-content:center;gap:5px;
+    }
+    .btn-add:hover{border-color:var(--a1);color:var(--a1);background:rgba(99,102,241,.05)}
+
+    /* ── Calc Button ── */
+    .btn-calc{
+      width:100%;padding:13px 20px;border:none;border-radius:var(--rs);
+      background:var(--ga);color:#fff;font-size:14px;font-weight:700;
+      font-family:var(--font);cursor:pointer;
+      transition:all var(--tr);
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      box-shadow:0 4px 22px rgba(99,102,241,.32);
+      letter-spacing:.02em;position:relative;overflow:hidden;margin-top:4px;
+    }
+    .btn-calc::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);
+      opacity:0;transition:opacity var(--tr);
+    }
+    .btn-calc:hover::before{opacity:1}
+    .btn-calc:hover{transform:translateY(-1px);box-shadow:0 6px 30px rgba(99,102,241,.45)}
+    .btn-calc:active{transform:translateY(0)}
+
+    /* ── Results panel ── */
+    .results{display:flex;flex-direction:column;gap:18px}
+
+    /* ── Summary cards ── */
+    .sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .sum-card{
+      background:var(--card);border:1px solid var(--bdr);
+      border-radius:var(--rs);padding:16px 18px;
+      transition:all var(--tr);
+    }
+    .sum-card:hover{border-color:rgba(255,255,255,.14);transform:translateY(-2px)}
+    .sum-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.09em;font-weight:600;margin-bottom:7px}
+    .sum-val{font-size:22px;font-weight:800;font-family:var(--mono)}
+    .sum-sub{font-size:10px;color:var(--t2);margin-top:3px}
+    .gp{background:var(--ga);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .gg{background:var(--gg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .go{background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+    /* ── Gantt ── */
+    .gantt-wrap{overflow-x:auto;padding-bottom:4px}
+    .g-row{display:flex;align-items:center;height:30px}
+    .g-lbl{width:72px;font-size:10px;font-weight:600;color:var(--t2);text-align:right;padding-right:10px;flex-shrink:0;white-space:nowrap}
+    .g-track{flex:1;position:relative;height:22px;background:rgba(255,255,255,.04);border-radius:4px}
+    .g-seg{
+      position:absolute;top:0;height:100%;border-radius:5px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:9px;font-weight:600;color:rgba(255,255,255,.85);
+      cursor:default;transition:all .5s cubic-bezier(.4,0,.2,1);
+      box-shadow:0 2px 8px rgba(0,0,0,.3);overflow:visible;
+    }
+    .g-seg:hover{filter:brightness(1.18);z-index:5}
+    .g-seg.is-final{box-shadow:0 0 14px rgba(245,158,11,.3)}
+    .g-tip{
+      display:none;position:absolute;bottom:calc(100% + 7px);left:50%;
+      transform:translateX(-50%);min-width:170px;
+      background:rgba(15,15,35,.96);border:1px solid var(--bdr);
+      border-radius:8px;padding:8px 12px;font-size:10px;
+      z-index:50;backdrop-filter:blur(12px);
+      box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none;
+      white-space:nowrap;
+    }
+    .g-seg:hover .g-tip{display:block}
+    .g-tip-row{display:flex;justify-content:space-between;gap:16px;color:var(--t2);margin-bottom:2px}
+    .g-tip-row strong{color:var(--t1)}
+    .g-time{width:125px;font-size:9px;font-family:var(--mono);color:var(--t3);flex-shrink:0;padding-left:8px;white-space:nowrap}
+    .g-axis{display:flex;margin-left:72px;position:relative;height:20px}
+    .g-axis-line{position:absolute;top:0;left:0;right:0;height:1px;background:var(--bdr)}
+    .g-tick{
+      position:absolute;top:0;transform:translateX(-50%);
+      font-size:9px;color:var(--t3);font-family:var(--mono);padding-top:5px;
+    }
+    .g-tick::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:4px;background:var(--bdr)}
+
+    /* batch colors */
+    .bc0{background:linear-gradient(90deg,#6366f1,#8b5cf6)}
+    .bc1{background:linear-gradient(90deg,#3b82f6,#6366f1)}
+    .bc2{background:linear-gradient(90deg,#06b6d4,#3b82f6)}
+    .bc3{background:linear-gradient(90deg,#10b981,#06b6d4)}
+    .bc4{background:linear-gradient(90deg,#84cc16,#10b981)}
+    .bc5{background:linear-gradient(90deg,#eab308,#84cc16)}
+    .bc6{background:linear-gradient(90deg,#f97316,#eab308)}
+    .bc7{background:linear-gradient(90deg,#ef4444,#f97316)}
+    .bc8{background:linear-gradient(90deg,#ec4899,#ef4444)}
+    .bc9{background:linear-gradient(90deg,#8b5cf6,#ec4899)}
+    .bc-final{background:linear-gradient(90deg,#f59e0b,#fb923c)}
+
+    /* ── Table ── */
+    .tbl-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th{
+      padding:9px 14px;text-align:left;font-size:10px;font-weight:600;
+      color:var(--t3);text-transform:uppercase;letter-spacing:.09em;
+      border-bottom:1px solid var(--bdr);white-space:nowrap;
+    }
+    td{
+      padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);
+      transition:background var(--tr);vertical-align:middle;
+    }
+    tr:hover td{background:rgba(255,255,255,.02)}
+    tr:last-child td{border-bottom:none}
+    .bdg{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:26px;height:20px;border-radius:4px;
+      font-size:10px;font-weight:700;font-family:var(--mono);padding:0 5px;
+    }
+    .bdg-n{background:rgba(99,102,241,.18);color:var(--a3);border:1px solid rgba(99,102,241,.28)}
+    .bdg-f{background:rgba(245,158,11,.18);color:#fbbf24;border:1px solid rgba(245,158,11,.28)}
+    .mono{font-family:var(--mono);font-size:11px}
+    .dur{font-family:var(--mono);font-size:11px;color:var(--t2)}
+
+    /* calc info strip */
+    .ci{
+      display:flex;gap:14px;flex-wrap:wrap;padding:10px 16px;
+      background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.13);
+      border-radius:var(--rx);margin-bottom:14px;
+    }
+    .ci-item{display:flex;flex-direction:column;gap:1px}
+    .ci-lbl{font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+    .ci-val{font-size:12px;font-family:var(--mono);color:var(--a3)}
+
+    /* ── Empty state ── */
+    .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--t3);text-align:center}
+    .empty-ico{font-size:44px;margin-bottom:14px;opacity:.35}
+    .empty-ttl{font-size:15px;font-weight:700;color:var(--t2);margin-bottom:6px}
+    .empty-msg{font-size:12px}
+
+    /* ── Toast ── */
+    .toast-ct{position:fixed;bottom:22px;right:22px;z-index:200;display:flex;flex-direction:column;gap:7px}
+    .toast{
+      padding:11px 16px;border-radius:var(--rs);font-size:12px;font-weight:500;
+      display:flex;align-items:center;gap:7px;backdrop-filter:blur(12px);
+      box-shadow:0 4px 20px rgba(0,0,0,.3);
+      animation:tIn .25s ease, tOut .25s ease 2.75s forwards;
+    }
+    .toast.ok{background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.28);color:#6ee7b7}
+    .toast.err{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.28);color:#fca5a5}
+    @keyframes tIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes tOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(16px)}}
+
+    /* copy button */
+    .btn-sm{
+      padding:5px 10px;border:1px solid var(--bdr);border-radius:var(--rx);
+      background:var(--inp);color:var(--t2);font-size:10px;font-family:var(--font);
+      cursor:pointer;transition:all var(--tr);display:flex;align-items:center;gap:4px;
+    }
+    .btn-sm:hover{border-color:var(--a1);color:var(--a1)}
+
+    /* hint */
+    .hint{font-size:10px;color:var(--t3);margin-bottom:9px;line-height:1.5}
+
+    /* divider */
+    .div{height:1px;background:var(--bdr);margin:14px 0}
+
+    /* ── Password screen ── */
+    .pw-overlay{
+      position:fixed;inset:0;z-index:9999;
+      background:var(--bg);
+      display:flex;align-items:center;justify-content:center;
+      transition:opacity .4s ease;
+    }
+    .pw-overlay.hidden{opacity:0;pointer-events:none}
+    .pw-box{
+      width:360px;
+      background:var(--card);
+      border:1px solid var(--bdr);
+      border-radius:var(--r);
+      backdrop-filter:blur(20px);
+      box-shadow:0 24px 64px rgba(0,0,0,.6), 0 0 0 1px rgba(99,102,241,.1);
+      padding:36px 32px;
+      display:flex;flex-direction:column;align-items:center;gap:0;
+      animation:pwIn .45s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes pwIn{
+      from{opacity:0;transform:translateY(24px) scale(.95)}
+      to{opacity:1;transform:translateY(0) scale(1)}
+    }
+    .pw-logo{
+      width:56px;height:56px;background:var(--ga);border-radius:16px;
+      display:flex;align-items:center;justify-content:center;font-size:26px;
+      box-shadow:0 0 32px rgba(99,102,241,.45);
+      margin-bottom:20px;
+    }
+    .pw-title{
+      font-size:18px;font-weight:800;letter-spacing:-.02em;
+      background:linear-gradient(135deg,#fff,var(--a3));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      margin-bottom:4px;
+    }
+    .pw-sub{font-size:11px;color:var(--t3);margin-bottom:28px;text-align:center}
+    .pw-field{
+      width:100%;position:relative;margin-bottom:12px;
+    }
+    .pw-field input{
+      width:100%;padding:11px 44px 11px 14px;
+      background:rgba(255,255,255,.07);
+      border:1px solid var(--bdr);
+      border-radius:var(--rs);
+      color:var(--t1);font-size:14px;font-family:var(--mono);
+      letter-spacing:.08em;
+      outline:none;transition:all var(--tr);
+    }
+    .pw-field input:focus{
+      border-color:var(--bdr-f);
+      background:rgba(99,102,241,.08);
+      box-shadow:0 0 0 3px rgba(99,102,241,.12);
+    }
+    .pw-eye{
+      position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      background:none;border:none;color:var(--t3);
+      cursor:pointer;font-size:16px;padding:2px;
+      transition:color var(--tr);
+    }
+    .pw-eye:hover{color:var(--t2)}
+    .pw-err{
+      font-size:11px;color:#fca5a5;
+      min-height:16px;margin-bottom:14px;text-align:center;
+      transition:opacity .2s;
+    }
+    .pw-btn{
+      width:100%;padding:12px;
+      border:none;border-radius:var(--rs);
+      background:var(--ga);color:#fff;
+      font-size:14px;font-weight:700;font-family:var(--font);
+      cursor:pointer;letter-spacing:.02em;
+      transition:all var(--tr);
+      box-shadow:0 4px 20px rgba(99,102,241,.35);
+    }
+    .pw-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(99,102,241,.5)}
+    .pw-btn:active{transform:translateY(0)}
+    .pw-shake{
+      animation:shake .35s ease;
+    }
+    @keyframes shake{
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-8px)}
+      40%{transform:translateX(8px)}
+      60%{transform:translateX(-6px)}
+      80%{transform:translateX(6px)}
+    }
+
+    /* ── Responsive ── */
+    @media(max-width:1060px){.wrap{grid-template-columns:1fr}}
+    @media(max-width:580px){.sum-grid{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+<!-- ── パスワード画面 ── -->
+<div class="pw-overlay" id="pwOverlay">
+  <div class="pw-box" id="pwBox">
+    <div class="pw-logo">🔒</div>
+    <div class="pw-title">RDタンク計算システム</div>
+    <div class="pw-sub">パスワードを入力してください</div>
+    <div class="pw-field">
+      <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')checkPassword()">
+      <button class="pw-eye" id="pwEye" onclick="togglePwEye()" title="表示/非表示">👁</button>
+    </div>
+    <div class="pw-err" id="pwErr"></div>
+    <button class="pw-btn" onclick="checkPassword()">ログイン</button>
+  </div>
+</div>
+
+<div class="orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="logo">
+      <div class="logo-ico">🏭</div>
+      <div>
+        <div class="logo-txt">RDタンク計算システム</div>
+        <div class="logo-sub">バッチ消費シミュレーター</div>
+      </div>
+    </div>
+    <div class="hdr-sp"></div>
+    <div class="hdr-badge"><div class="pulse"></div>オンライン</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ────── 左カラム：入力 ────── -->
+  <aside>
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-hd">
+        <div class="card-ttl">
+          <div class="ttl-ico" style="background:rgba(99,102,241,.2)">⚙️</div>
+          計算設定
+        </div>
+      </div>
+      <div class="card-bd">
+
+        <!-- モードタブ（2つ） -->
+        <div class="tabs">
+          <button class="tab on" id="tab-normal" onclick="switchMode('normal')">
+            <div class="tab-ico">📊</div>
+            <div class="tab-nm">既存グレード計算</div>
+            <div class="tab-ds">次グレード向け</div>
+          </button>
+          <button class="tab" id="tab-oldrd" onclick="switchMode('oldrd')">
+            <div class="tab-ico">🔄</div>
+            <div class="tab-nm">HPグレード計算</div>
+            <div class="tab-ds">前グレード既存向け</div>
+          </button>
+        </div>
+
+        <!-- ── オプション設定（タブ直下） ── -->
+        <!-- 既存グレード計算：HP考慮オプション -->
+        <div id="sec-normal-opts">
+          <div class="opt-row" id="opt-hp-row" onclick="toggleOpt('hp')">
+            <div class="opt-chk" id="opt-hp-chk"><span class="opt-chk-mark">✓</span></div>
+            <div class="opt-txt">
+              <div class="opt-ttl">次グレードHP（G側先行フィード考慮）</div>
+              <div class="opt-sub">HP CALC モード — G側先行フィード時間を加味した最終計算</div>
+            </div>
+          </div>
+          <div class="sub-sec" id="sub-hp">
+            <div class="fg">
+              <label>G側先行フィード開始 <span class="unit">(分前)</span></label>
+              <input type="number" id="gSideMinutes" value="30" min="0" max="120" step="1">
+            </div>
+          </div>
+        </div>
+        <!-- HPグレード計算：前グレード既存オプション -->
+        <div id="sec-oldrd-opts" style="display:none">
+          <div class="opt-row" id="opt-prev-row" onclick="toggleOpt('prev')">
+            <div class="opt-chk" id="opt-prev-chk"><span class="opt-chk-mark">✓</span></div>
+            <div class="opt-txt">
+              <div class="opt-ttl">前グレード既存（フィード量変更考慮）</div>
+              <div class="opt-sub">切替前フィード変更分を1バッチ目から差し引く補正計算</div>
+            </div>
+          </div>
+          <div class="sub-sec" id="sub-prev">
+            <div class="grid2">
+              <div class="fg full">
+                <label>フィード変更時間 <span class="unit">(hr)</span></label>
+                <input type="number" id="c11" placeholder="例: 2.5" step="0.1" min="0">
+              </div>
+              <div class="fg">
+                <label>変更前フィード量 <span class="unit">(kg/hr)</span></label>
+                <input type="number" id="c12" placeholder="例: 3000" step="1" min="0">
+              </div>
+              <div class="fg">
+                <label>変更後フィード量 <span class="unit">(kg/hr)</span></label>
+                <input type="number" id="c13" placeholder="例: 6000" step="1" min="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="div"></div>
+
+        <!-- 基本設定 -->
+        <div class="sec">
+          <div class="sec-ttl">基本設定</div>
+          <div class="grid2">
+            <div class="fg">
+              <label>初期レート <span class="unit">(t/日)</span></label>
+              <input type="number" id="initialRate" value="179" step="0.1" min="0" placeholder="例: 179">
+            </div>
+            <div class="fg">
+              <label>Solid％</label>
+              <input type="number" id="solidPercent" value="57" step="0.1" min="0.01" max="100" placeholder="例: 57">
+            </div>
+            <div class="fg">
+              <label>RD％</label>
+              <input type="number" id="rdPercent" value="40" step="0.1" min="0.01" max="100" placeholder="例: 40">
+            </div>
+            <div class="fg">
+              <label>RU％</label>
+              <input type="number" id="ruPercent" value="11" step="0.1" min="0.01" max="100" placeholder="例: 11">
+            </div>
+            <div class="fg full">
+              <label>切替開始日時</label>
+              <input type="datetime-local" id="startDatetime">
+            </div>
+          </div>
+        </div>
+
+        <div class="div"></div>
+
+        <!-- バッチ容量 -->
+        <div class="sec">
+          <div class="sec-ttl">RDタンク容量（バッチ別）</div>
+          <div class="hint">各バッチのRDタンク容量を入力してください。</div>
+          <div class="dyn-list" id="batchList"></div>
+          <button class="btn-add" onclick="addBatch()" style="margin-top:7px">＋ バッチを追加</button>
+        </div>
+
+        <div class="div"></div>
+
+        <!-- レート変更 -->
+        <div class="sec">
+          <div class="sec-ttl">レート変更（任意）</div>
+          <div class="hint">期間中にレートが変わる場合は入力してください。</div>
+          <div class="dyn-list" id="rateChangeList"></div>
+          <button class="btn-add" onclick="addRateChange()" style="margin-top:7px">＋ レート変更を追加</button>
+        </div>
+
+        <div class="div"></div>
+
+        <button class="btn-calc" id="calcBtn" onclick="runCalculation()">
+          ▶ 計算実行
+        </button>
+
+      </div>
+    </div>
+  </aside>
+
+  <!-- ────── 右カラム：結果 ────── -->
+  <section class="results">
+
+    <!-- サマリーカード -->
+    <div class="sum-grid" id="summaryGrid" style="display:none">
+      <div class="sum-card">
+        <div class="sum-lbl">バッチ数</div>
+        <div class="sum-val gp" id="sumBatches">—</div>
+        <div class="sum-sub" id="sumMode">—</div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-lbl">最終完了日時</div>
+        <div class="sum-val go" id="sumFinal" style="font-size:15px;letter-spacing:-.02em">—</div>
+        <div class="sum-sub" id="sumFinalSub">—</div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-lbl">総所要時間</div>
+        <div class="sum-val gg" id="sumDuration">—</div>
+        <div class="sum-sub">開始〜最終完了</div>
+      </div>
+    </div>
+
+    <!-- 計算パラメータ -->
+    <div class="card" id="calcInfoCard" style="display:none">
+      <div class="card-hd">
+        <div class="card-ttl"><div class="ttl-ico" style="background:rgba(99,102,241,.2)">🔢</div>計算パラメータ</div>
+      </div>
+      <div class="card-bd" style="padding-top:14px">
+        <div class="ci" id="calcInfoStrip"></div>
+      </div>
+    </div>
+
+    <!-- ガントチャート -->
+    <div class="card" id="ganttCard" style="display:none">
+      <div class="card-hd">
+        <div class="card-ttl"><div class="ttl-ico" style="background:rgba(16,185,129,.2)">📅</div>タイムライン</div>
+        <button class="btn-sm" onclick="copyResults()">📋 コピー</button>
+      </div>
+      <div class="card-bd" style="padding-top:14px">
+        <div class="gantt-wrap" id="ganttWrap"></div>
+      </div>
+    </div>
+
+    <!-- 結果テーブル -->
+    <div class="card" id="tableCard" style="display:none">
+      <div class="card-hd">
+        <div class="card-ttl"><div class="ttl-ico" style="background:rgba(245,158,11,.2)">📋</div>バッチ結果一覧</div>
+      </div>
+      <div class="card-bd" style="padding:0">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>バッチ</th>
+                <th>開始日時</th>
+                <th>完了予定日時</th>
+                <th>所要時間</th>
+                <th>タンク容量</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 初期空状態 -->
+    <div class="card" id="emptyCard">
+      <div class="card-bd">
+        <div class="empty">
+          <div class="empty-ico">🏭</div>
+          <div class="empty-ttl">計算待ち</div>
+          <div class="empty-msg">左のパネルで設定を入力し、<br>「計算実行」ボタンを押してください。</div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<div class="toast-ct" id="toastCt"></div>
+
+<script>
+/* ===================================================
+   状態管理
+=================================================== */
+let currentMode = 'normal';   // 'normal' or 'oldrd'
+let useHP = false;             // 次グレードHP チェック（通常CALC時）
+let usePrev = false;           // 前グレード既存 チェック（HPtoHP時）
+let batchCount = 0;
+let rateChangeCount = 0;
+
+/* ===================================================
+   モード切替
+=================================================== */
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('tab-normal').classList.toggle('on', mode === 'normal');
+  document.getElementById('tab-oldrd').classList.toggle('on', mode === 'oldrd');
+  document.getElementById('sec-normal-opts').style.display = mode === 'normal' ? '' : 'none';
+  document.getElementById('sec-oldrd-opts').style.display  = mode === 'oldrd'  ? '' : 'none';
+  saveState();
+}
+
+/* ===================================================
+   チェックボックストグル
+=================================================== */
+function toggleOpt(which) {
+  if (which === 'hp') {
+    useHP = !useHP;
+    document.getElementById('opt-hp-row').classList.toggle('active', useHP);
+    document.getElementById('sub-hp').classList.toggle('vis', useHP);
+  } else {
+    usePrev = !usePrev;
+    document.getElementById('opt-prev-row').classList.toggle('active', usePrev);
+    document.getElementById('sub-prev').classList.toggle('vis', usePrev);
+  }
+  saveState();
+}
+
+/* ===================================================
+   バッチ管理
+=================================================== */
+function addBatch(val = '') {
+  batchCount++;
+  const id = batchCount;
+  const list = document.getElementById('batchList');
+  const row = document.createElement('div');
+  row.className = 'dyn-row';
+  row.id = 'batch-row-' + id;
+  row.innerHTML = `
+    <div class="row-num">${id}</div>
+    <input type="number" id="batch-${id}" value="${val}" min="0" step="0.1" placeholder="タンク容量">
+    <button class="btn-del" title="削除" onclick="removeBatch(${id})">✕</button>
+  `;
+  list.appendChild(row);
+  updateBatchNumbers();
+}
+
+function removeBatch(id) {
+  const el = document.getElementById('batch-row-' + id);
+  if (el) el.remove();
+  updateBatchNumbers();
+}
+
+function updateBatchNumbers() {
+  document.querySelectorAll('#batchList .dyn-row').forEach((r, i) => {
+    const n = r.querySelector('.row-num'); if (n) n.textContent = i + 1;
+  });
+}
+
+function getBatches() {
+  return Array.from(document.querySelectorAll('#batchList input[type=number]'))
+    .map(i => parseFloat(i.value)).filter(v => !isNaN(v) && v >= 0);
+}
+
+/* ===================================================
+   レート変更管理
+=================================================== */
+function addRateChange(timeVal = '', rateVal = '') {
+  rateChangeCount++;
+  const id = rateChangeCount;
+  const list = document.getElementById('rateChangeList');
+  const row = document.createElement('div');
+  row.className = 'dyn-row';
+  row.id = 'rc-row-' + id;
+  row.innerHTML = `
+    <div class="row-num">${id}</div>
+    <div style="flex:1;display:grid;grid-template-columns:1fr 100px;gap:5px">
+      <input type="datetime-local" id="rc-time-${id}" value="${timeVal}" placeholder="変更日時">
+      <input type="number" id="rc-rate-${id}" value="${rateVal}" min="0" step="0.1" placeholder="新レート">
+    </div>
+    <button class="btn-del" title="削除" onclick="removeRateChange(${id})">✕</button>
+  `;
+  list.appendChild(row);
+  updateRcNumbers();
+}
+
+function removeRateChange(id) {
+  const el = document.getElementById('rc-row-' + id);
+  if (el) el.remove();
+  updateRcNumbers();
+}
+
+function updateRcNumbers() {
+  document.querySelectorAll('#rateChangeList .dyn-row').forEach((r, i) => {
+    const n = r.querySelector('.row-num'); if (n) n.textContent = i + 1;
+  });
+}
+
+function getRateChanges() {
+  return Array.from(document.querySelectorAll('#rateChangeList .dyn-row')).reduce((acc, row) => {
+    const t = row.querySelector('input[type=datetime-local]')?.value;
+    const r = parseFloat(row.querySelector('input[type=number]')?.value);
+    if (t && !isNaN(r) && r > 0) acc.push({ time: new Date(t), newRate: r });
+    return acc;
+  }, []).sort((a, b) => a.time - b.time);
+}
+
+/* ===================================================
+   計算エンジン
+=================================================== */
+function getFeedNormal(rate, solid) {
+  return (rate / 24) / (solid / 100);
+}
+function getFeedOldRD(rate, solid) {
+  return ((rate / 24) / (solid / 100)) / 3 * 2;
+}
+function getRdFeed(feed, rd, ru) {
+  return feed * (rd / 100) / (ru / 100);
+}
+
+/** 1バッチ内のレート変更を処理して完了時刻を返す */
+function processBatch(cap, prevTime, rdFeed, feed, rateChanges, solid, rd, ru, feedFn) {
+  let c = cap, pt = new Date(prevTime), f = feed, rf = rdFeed;
+  if (rf <= 0) throw new Error('RDフィードが0以下です。パラメータを確認してください。');
+  let et = new Date(pt.getTime() + (c / rf) * 3600000);
+  for (const ch of rateChanges) {
+    if (pt < ch.time && et > ch.time) {
+      const hrs = (ch.time - pt) / 3600000;
+      c -= hrs * rf;
+      pt = new Date(ch.time);
+      f = feedFn(ch.newRate, solid);
+      rf = getRdFeed(f, rd, ru);
+      if (rf <= 0) throw new Error('レート変更後のRDフィードが0以下です。');
+      et = new Date(pt.getTime() + (c / rf) * 3600000);
+    }
+  }
+  return { endTime: et, feed: f, rdFeed: rf };
+}
+
+/* ──── 共通バッチループ（モードに応じた feedFn を渡す） ──── */
+function runBatches(p, feedFn) {
+  const { initialRate, solid, rd, ru, startTime, batches, rateChanges, mixConst, finalDivisor } = p;
+  let feed = feedFn(initialRate, solid);
+  let rdFeed = getRdFeed(feed, rd, ru);
+  const mixTime = 18.9 / (feed - mixConst);
+  const sub1 = mixTime * rdFeed;
+  if (!isFinite(mixTime) || mixTime < 0)
+    throw new Error(`フィード量が小さすぎます（feed ≤ ${mixConst}）。レートまたはSolid％を確認してください。`);
+
+  let prev = new Date(startTime);
+  const rows = [];
+
+  // 1バッチ目
+  let cap = batches[0] - sub1;
+  if (cap < 0) cap = 0;
+  const r0 = processBatch(cap, prev, rdFeed, feed, rateChanges, solid, rd, ru, feedFn);
+  rows.push({ label: '1バッチ目', start: prev, end: r0.endTime, cap: batches[0], effCap: cap, isFinal: false });
+  prev = r0.endTime; feed = r0.feed; rdFeed = r0.rdFeed;
+
+  // 2バッチ目以降
+  for (let i = 1; i < batches.length; i++) {
+    const c = batches[i];
+    const r = processBatch(c, prev, rdFeed, feed, rateChanges, solid, rd, ru, feedFn);
+    rows.push({ label: `${i+1}バッチ目`, start: prev, end: r.endTime, cap: c, effCap: c, isFinal: false });
+    prev = r.endTime; feed = r.feed; rdFeed = r.rdFeed;
+  }
+
+  return { rows, feed, rdFeed, mixTime, sub1, prev };
+}
+
+/* ──── 通常CALC ──── */
+function calcNormal(p) {
+  const res = runBatches({ ...p, mixConst: 0.175 }, getFeedNormal);
+  const { rows, feed, rdFeed, mixTime, sub1, prev } = res;
+  const addTime = 18.9 / (feed - 0.175);
+  if (!isFinite(addTime) || addTime < 0) throw new Error('最終計算：フィード量が小さすぎます。');
+  rows.push({ label: '最終（ミキシング）', start: prev, end: new Date(prev.getTime() + addTime * 3600000), cap: null, effCap: null, isFinal: true });
+  return { rows, feed, rdFeed, mixTime, sub1 };
+}
+
+/* ──── HP CALC（通常+HP考慮） ──── */
+function calcHP(p) {
+  const { gSideMinutes } = p;
+  const res = runBatches({ ...p, mixConst: 0.175 }, getFeedNormal);
+  const { rows, feed, rdFeed, mixTime, sub1, prev } = res;
+  const gH = gSideMinutes / 60;
+  const gRem = 18.9 - (((feed / 26) * 6) - 0.071) * gH;
+  const finalTime = gRem / (feed - 0.175) + gH;
+  if (!isFinite(finalTime) || finalTime < 0) throw new Error('HP最終計算：パラメータを確認してください。');
+  rows.push({ label: '最終（HP）', start: prev, end: new Date(prev.getTime() + finalTime * 3600000), cap: null, effCap: null, isFinal: true });
+  return { rows, feed, rdFeed, mixTime, sub1, gRem, finalTime };
+}
+
+/* ──── HPtoHP CALC（旧存RD） ──── */
+function calcOldRD(p) {
+  const { solid, rd, ru, startTime, batches, rateChanges, c11, c12, c13 } = p;
+  let feed = getFeedOldRD(p.initialRate, solid);
+  let rdFeed = getRdFeed(feed, rd, ru);
+  const mixTime = 18.9 / (feed - 0.071);
+  const sub1 = mixTime * rdFeed;
+  if (!isFinite(mixTime) || mixTime < 0) throw new Error('フィード量が小さすぎます（feed ≤ 0.071）。');
+
+  let prev = new Date(startTime);
+  const rows = [];
+
+  // 1バッチ目：前グレード既存補正の有無
+  const hasSpecial = usePrev && [c11, c12, c13].every(v => v !== '' && v !== null && v !== undefined && !isNaN(parseFloat(v)));
+  let cap, batch1Start = new Date(prev);
+
+  if (hasSpecial) {
+    const v11 = parseFloat(c11), v12 = parseFloat(c12), v13 = parseFloat(c13);
+    const s1 = v11 * (v13 - v12) / 2 * (rd / 100) / (ru / 100) / 1000;
+    const s2 = v12 * v11 * (rd / 100) / (ru / 100) / 1000;
+    cap = batches[0] - (s1 + s2 + sub1);
+    batch1Start = new Date(prev.getTime() + v11 * 3600000);
+  } else {
+    cap = batches[0] - sub1;
+  }
+  if (cap < 0) cap = 0;
+
+  const r0 = processBatch(cap, batch1Start, rdFeed, feed, rateChanges, solid, rd, ru, getFeedOldRD);
+  rows.push({ label: '1バッチ目', start: batch1Start, end: r0.endTime, cap: batches[0], effCap: cap, isFinal: false, hasSpecial });
+  prev = r0.endTime; feed = r0.feed; rdFeed = r0.rdFeed;
+
+  for (let i = 1; i < batches.length; i++) {
+    const c = batches[i];
+    const r = processBatch(c, prev, rdFeed, feed, rateChanges, solid, rd, ru, getFeedOldRD);
+    rows.push({ label: `${i+1}バッチ目`, start: prev, end: r.endTime, cap: c, effCap: c, isFinal: false });
+    prev = r.endTime; feed = r.feed; rdFeed = r.rdFeed;
+  }
+
+  const addTime = 18.9 / (feed - 0.71);
+  if (!isFinite(addTime) || addTime < 0) throw new Error('HPtoHP最終計算：フィード量が小さすぎます（feed ≤ 0.71）。');
+  rows.push({ label: '最終（ミキシング）', start: prev, end: new Date(prev.getTime() + addTime * 3600000), cap: null, effCap: null, isFinal: true });
+
+  return { rows, feed, rdFeed, mixTime, sub1 };
+}
+
+/* ===================================================
+   計算実行
+=================================================== */
+function runCalculation() {
+  try {
+    const initialRate = parseFloat(document.getElementById('initialRate').value);
+    const solid       = parseFloat(document.getElementById('solidPercent').value);
+    const rd          = parseFloat(document.getElementById('rdPercent').value);
+    const ru          = parseFloat(document.getElementById('ruPercent').value);
+    const startDt     = document.getElementById('startDatetime').value;
+
+    if (isNaN(initialRate) || initialRate <= 0) throw new Error('初期レートを正しく入力してください。');
+    if (isNaN(solid) || solid <= 0)             throw new Error('Solid％を正しく入力してください。');
+    if (isNaN(rd) || rd <= 0)                   throw new Error('RD％を正しく入力してください。');
+    if (isNaN(ru) || ru <= 0)                   throw new Error('RU％を正しく入力してください。');
+    if (!startDt)                               throw new Error('切替開始日時を入力してください。');
+
+    const batches     = getBatches();
+    if (batches.length === 0) throw new Error('バッチを1つ以上追加してください。');
+
+    const rateChanges = getRateChanges();
+    const startTime   = new Date(startDt);
+    const base = { initialRate, solid, rd, ru, startTime, batches, rateChanges };
+
+    let result, modeLabel;
+
+    if (currentMode === 'normal') {
+      if (useHP) {
+        const gSideMinutes = parseFloat(document.getElementById('gSideMinutes').value) || 0;
+        result = calcHP({ ...base, gSideMinutes });
+        modeLabel = '通常CALC（次グレードHP）';
+      } else {
+        result = calcNormal(base);
+        modeLabel = '通常CALC';
+      }
+    } else {
+      const c11 = document.getElementById('c11').value;
+      const c12 = document.getElementById('c12').value;
+      const c13 = document.getElementById('c13').value;
+      result = calcOldRD({ ...base, c11, c12, c13 });
+      modeLabel = usePrev ? 'HPtoHP（前グレード既存補正あり）' : 'HPtoHP';
+    }
+
+    renderResults(result, startTime, modeLabel);
+    saveState();
+    showToast('✅ 計算完了', 'ok');
+
+  } catch (e) {
+    showToast('❌ ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+/* ===================================================
+   結果レンダリング
+=================================================== */
+function renderResults(result, startTime, modeLabel) {
+  const { rows } = result;
+  const finalRow  = rows[rows.length - 1];
+  const totalMs   = finalRow.end - startTime;
+
+  document.getElementById('sumBatches').textContent  = rows.length - 1;
+  document.getElementById('sumMode').textContent     = modeLabel;
+  document.getElementById('sumFinal').textContent    = fmtDate(finalRow.end);
+  document.getElementById('sumFinalSub').textContent = `${modeLabel} — ${rows.length - 1}バッチ完了後`;
+  document.getElementById('sumDuration').textContent = fmtDur(totalMs);
+
+  // 計算パラメータ strip
+  const pItems = [
+    { l: 'feed (t/h)',    v: result.feed.toFixed(4) },
+    { l: 'rdFeed (t/h)',  v: result.rdFeed.toFixed(4) },
+    { l: 'MixTank (h)',   v: result.mixTime.toFixed(3) },
+    { l: '1B減少量',       v: result.sub1.toFixed(3) },
+  ];
+  if (result.gRem !== undefined)   pItems.push({ l: 'Gタンク残量',       v: result.gRem.toFixed(3) });
+  if (result.finalTime !== undefined) pItems.push({ l: '最終所要時間(h)', v: result.finalTime.toFixed(3) });
+
+  document.getElementById('calcInfoStrip').innerHTML =
+    pItems.map(p => `<div class="ci-item"><div class="ci-lbl">${p.l}</div><div class="ci-val">${p.v}</div></div>`).join('');
+
+  // テーブル
+  document.getElementById('resultsTbody').innerHTML = rows.map((r, i) => {
+    const dur     = r.end - r.start;
+    const bdgCls  = r.isFinal ? 'bdg-f' : 'bdg-n';
+    const bdgTxt  = r.isFinal ? '🏁' : (i + 1);
+    const capTxt  = r.cap !== null ? r.cap.toFixed(2) : '—';
+    return `<tr>
+      <td><span class="bdg ${bdgCls}">${bdgTxt}</span><span style="font-size:11px;color:var(--t2);margin-left:6px">${r.label}</span></td>
+      <td class="mono">${fmtDate(r.start)}</td>
+      <td class="mono">${fmtDate(r.end)}</td>
+      <td class="dur">${fmtDur(dur)}</td>
+      <td class="dur">${capTxt}</td>
+    </tr>`;
+  }).join('');
+
+  // ガント
+  renderGantt(rows, startTime, finalRow.end);
+
+  // 表示切替
+  ['emptyCard'].forEach(id => document.getElementById(id).style.display = 'none');
+  ['summaryGrid','calcInfoCard','ganttCard','tableCard'].forEach(id => document.getElementById(id).style.display = '');
+}
+
+/* ===================================================
+   ガントチャート
+=================================================== */
+function renderGantt(rows, totalStart, totalEnd) {
+  const totalMs  = totalEnd - totalStart;
+  const rowsHtml = rows.map((r, i) => {
+    const left  = (r.start - totalStart) / totalMs * 100;
+    const width = (r.end   - r.start)   / totalMs * 100;
+    const clr   = r.isFinal ? 'bc-final is-final' : `bc${i % 10}`;
+    const shortLabel = r.label.replace('バッチ目', 'B').replace('最終（ミキシング）','最終').replace('最終（HP）','最終HP');
+    const tip = `
+      <div class="g-tip">
+        <div class="g-tip-row"><span>開始</span><strong>${fmtDate(r.start)}</strong></div>
+        <div class="g-tip-row"><span>完了</span><strong>${fmtDate(r.end)}</strong></div>
+        <div class="g-tip-row"><span>所要</span><strong>${fmtDur(r.end - r.start)}</strong></div>
+        ${r.cap !== null ? `<div class="g-tip-row"><span>容量</span><strong>${r.cap.toFixed(2)}</strong></div>` : ''}
+      </div>`;
+    const inner = width > 8 ? shortLabel : '';
+    return `
+      <div class="g-row">
+        <div class="g-lbl">${shortLabel}</div>
+        <div class="g-track">
+          <div class="g-seg ${clr}" style="left:${left.toFixed(2)}%;width:${Math.max(width,0.5).toFixed(2)}%">
+            ${inner}${tip}
+          </div>
+        </div>
+        <div class="g-time">${fmtDate(r.end)}</div>
+      </div>`;
+  }).join('');
+
+  const ticks = Array.from({length: 7}, (_, i) => {
+    const pct = i / 6 * 100;
+    const t   = new Date(totalStart.getTime() + totalMs * i / 6);
+    return `<div class="g-tick" style="left:${pct.toFixed(1)}%">${fmtDateShort(t)}</div>`;
+  }).join('');
+
+  document.getElementById('ganttWrap').innerHTML = `
+    <div style="min-width:500px;display:flex;flex-direction:column;gap:5px;margin-bottom:10px">${rowsHtml}</div>
+    <div class="g-axis" style="margin-left:72px;position:relative;height:24px">
+      <div class="g-axis-line"></div>${ticks}
+    </div>`;
+}
+
+/* ===================================================
+   ユーティリティ
+=================================================== */
+function fmtDate(d) {
+  if (!(d instanceof Date)) return '—';
+  const Y = d.getFullYear(), M = String(d.getMonth()+1).padStart(2,'0'), D = String(d.getDate()).padStart(2,'0');
+  const h = String(d.getHours()).padStart(2,'0'), m = String(d.getMinutes()).padStart(2,'0');
+  return `${Y}/${M}/${D} ${h}:${m}`;
+}
+function fmtDateShort(d) {
+  return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function fmtDur(ms) {
+  if (ms < 0) return '—';
+  const total = Math.round(ms / 60000);
+  return `${Math.floor(total / 60)}h ${String(total % 60).padStart(2,'0')}m`;
+}
+
+/* ===================================================
+   コピー
+=================================================== */
+function copyResults() {
+  let txt = 'バッチ\t開始日時\t完了予定日時\t所要時間\tタンク容量\n';
+  document.querySelectorAll('#resultsTbody tr').forEach(r => {
+    txt += Array.from(r.querySelectorAll('td')).map(c => c.textContent.trim().replace(/\s+/g,' ')).join('\t') + '\n';
+  });
+  navigator.clipboard.writeText(txt).then(() => showToast('📋 クリップボードにコピーしました', 'ok'));
+}
+
+/* ===================================================
+   Toast
+=================================================== */
+function showToast(msg, type = 'ok') {
+  const el = Object.assign(document.createElement('div'), { className: `toast ${type}`, textContent: msg });
+  document.getElementById('toastCt').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+/* ===================================================
+   LocalStorage
+=================================================== */
+const LS_KEY = 'rdTankCalcState_v4';
+
+function saveState() {
+  try {
+    const batches = Array.from(document.querySelectorAll('#batchList input[type=number]')).map(i => i.value);
+    const rcs = Array.from(document.querySelectorAll('#rateChangeList .dyn-row')).map(r => ({
+      time: r.querySelector('input[type=datetime-local]')?.value || '',
+      rate: r.querySelector('input[type=number]')?.value || ''
+    }));
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      mode: currentMode, useHP, usePrev,
+      initialRate: document.getElementById('initialRate').value,
+      solidPercent: document.getElementById('solidPercent').value,
+      rdPercent:    document.getElementById('rdPercent').value,
+      ruPercent:    document.getElementById('ruPercent').value,
+      startDatetime:document.getElementById('startDatetime').value,
+      batches, rcs,
+      gSideMinutes: document.getElementById('gSideMinutes').value,
+      c11: document.getElementById('c11').value,
+      c12: document.getElementById('c12').value,
+      c13: document.getElementById('c13').value,
+    }));
+  } catch(e) { /* ignore */ }
+}
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (!s) return;
+
+    // mode
+    if (s.mode) switchMode(s.mode);
+
+    // checkboxes
+    if (s.useHP  && !useHP)  toggleOpt('hp');
+    if (s.usePrev && !usePrev) toggleOpt('prev');
+
+    // fields
+    ['initialRate','solidPercent','rdPercent','ruPercent','startDatetime','gSideMinutes','c11','c12','c13']
+      .forEach(f => { const el = document.getElementById(f); if (el && s[f] !== undefined) el.value = s[f]; });
+
+    if (s.batches?.length) s.batches.forEach(v => addBatch(v));
+    if (s.rcs?.length)     s.rcs.forEach(rc => addRateChange(rc.time, rc.rate));
+  } catch(e) { /* ignore */ }
+}
+
+/* ===================================================
+   パスワード認証
+=================================================== */
+const PW_KEY  = 'rdCalc_auth';
+const CORRECT = 'midorikawaAIO';
+
+function checkPassword() {
+  const val = document.getElementById('pwInput').value;
+  if (val === CORRECT) {
+    sessionStorage.setItem(PW_KEY, '1');
+    const overlay = document.getElementById('pwOverlay');
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.style.display = 'none', 420);
+    initApp();
+  } else {
+    const box = document.getElementById('pwBox');
+    const err = document.getElementById('pwErr');
+    err.textContent = 'パスワードが違います';
+    box.classList.remove('pw-shake');
+    void box.offsetWidth; // reflow
+    box.classList.add('pw-shake');
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+    setTimeout(() => { err.textContent = ''; }, 2500);
+  }
+}
+
+function togglePwEye() {
+  const inp = document.getElementById('pwInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+/* ===================================================
+   初期化
+=================================================== */
+function initApp() {
+  const now = new Date(); now.setSeconds(0, 0);
+  const el = document.getElementById('startDatetime');
+  if (!el.value) {
+    el.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+
+  loadState();
+
+  if (document.querySelectorAll('#batchList .dyn-row').length === 0) {
+    [100, 100, 100, 100, 100].forEach(v => addBatch(v));
+  }
+
+  document.querySelectorAll('input').forEach(inp => inp.addEventListener('change', saveState));
+}
+
+(function boot() {
+  if (sessionStorage.getItem(PW_KEY) === '1') {
+    // 認証済み：パスワード画面をスキップ
+    document.getElementById('pwOverlay').style.display = 'none';
+    initApp();
+  } else {
+    // 未認証：パスワード画面を表示してフォーカス
+    setTimeout(() => document.getElementById('pwInput').focus(), 100);
+  }
+})();
+</script>
+
+</body>
+</html>

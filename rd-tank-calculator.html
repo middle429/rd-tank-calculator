@@ -11,17 +11,17 @@
     :root {
       --bg: #07071a;
       --bg2: #0e0e24;
-      --card: rgba(255,255,255,0.04);
-      --card-h: rgba(255,255,255,0.07);
-      --inp: rgba(255,255,255,0.06);
-      --bdr: rgba(255,255,255,0.09);
-      --bdr-f: rgba(99,102,241,0.55);
-      --t1: #eef0ff;
-      --t2: #8b8eb0;
-      --t3: #4a4a70;
+      --card: rgba(255,255,255,0.05);
+      --card-h: rgba(255,255,255,0.08);
+      --inp: rgba(255,255,255,0.08);
+      --bdr: rgba(255,255,255,0.12);
+      --bdr-f: rgba(99,102,241,0.6);
+      --t1: #f0f2ff;
+      --t2: #b0b3d6;
+      --t3: #7a7da8;
       --a1: #6366f1;
       --a2: #8b5cf6;
-      --a3: #a78bfa;
+      --a3: #c4b5fd;
       --ok: #10b981;
       --warn: #f59e0b;
       --err: #ef4444;
@@ -33,7 +33,7 @@
       --tr: .18s cubic-bezier(.4,0,.2,1);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html{font-size:14px;scroll-behavior:smooth}
+    html{font-size:15px;scroll-behavior:smooth}
     body{
       font-family:var(--font);
       background-color:var(--bg);
@@ -257,38 +257,58 @@
 
     /* ── Gantt ── */
     .gantt-wrap{overflow-x:auto;padding-bottom:4px}
-    .g-row{display:flex;align-items:center;height:30px}
-    .g-lbl{width:72px;font-size:10px;font-weight:600;color:var(--t2);text-align:right;padding-right:10px;flex-shrink:0;white-space:nowrap}
-    .g-track{flex:1;position:relative;height:22px;background:rgba(255,255,255,.04);border-radius:4px}
-    .g-seg{
-      position:absolute;top:0;height:100%;border-radius:5px;
-      display:flex;align-items:center;justify-content:center;
-      font-size:9px;font-weight:600;color:rgba(255,255,255,.85);
-      cursor:default;transition:all .5s cubic-bezier(.4,0,.2,1);
-      box-shadow:0 2px 8px rgba(0,0,0,.3);overflow:visible;
+    .g-rows{min-width:600px;display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+    .g-row{display:flex;align-items:flex-start;gap:0}
+    .g-lbl{
+      width:68px;font-size:12px;font-weight:700;color:var(--t1);
+      text-align:right;padding-right:10px;padding-top:5px;
+      flex-shrink:0;white-space:nowrap;
     }
-    .g-seg:hover{filter:brightness(1.18);z-index:5}
-    .g-seg.is-final{box-shadow:0 0 14px rgba(245,158,11,.3)}
-    .g-tip{
-      display:none;position:absolute;bottom:calc(100% + 7px);left:50%;
-      transform:translateX(-50%);min-width:170px;
-      background:rgba(15,15,35,.96);border:1px solid var(--bdr);
-      border-radius:8px;padding:8px 12px;font-size:10px;
-      z-index:50;backdrop-filter:blur(12px);
-      box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none;
+    .g-track-col{flex:1;display:flex;flex-direction:column;gap:5px}
+    .g-track{
+      position:relative;height:28px;
+      background:rgba(255,255,255,.05);border-radius:7px;
+    }
+    .g-seg{
+      position:absolute;top:0;height:100%;border-radius:7px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;color:rgba(255,255,255,.95);
+      box-shadow:0 2px 10px rgba(0,0,0,.35);
+      overflow:hidden;white-space:nowrap;
+      transition:filter .15s;
+    }
+    .g-seg:hover{filter:brightness(1.2);z-index:5}
+    .g-seg.is-final{box-shadow:0 0 16px rgba(245,158,11,.35)}
+    /* 時刻行 */
+    .g-timebar{
+      position:relative;height:20px;overflow:visible;
+    }
+    .gt-start{
+      position:absolute;
+      color:#6ee7b7;font-weight:600;font-size:11px;font-family:var(--mono);
       white-space:nowrap;
     }
-    .g-seg:hover .g-tip{display:block}
-    .g-tip-row{display:flex;justify-content:space-between;gap:16px;color:var(--t2);margin-bottom:2px}
-    .g-tip-row strong{color:var(--t1)}
-    .g-time{width:125px;font-size:9px;font-family:var(--mono);color:var(--t3);flex-shrink:0;padding-left:8px;white-space:nowrap}
-    .g-axis{display:flex;margin-left:72px;position:relative;height:20px}
+    .gt-start::before{content:'▶ '}
+    .gt-end{
+      position:absolute;
+      color:#fbbf24;font-weight:600;font-size:11px;font-family:var(--mono);
+      white-space:nowrap;
+    }
+    .gt-end::before{content:'■ '}
+    .gt-dur{color:var(--t2);font-size:10px}
+    /* axis */
+    .g-axis{display:flex;margin-left:68px;position:relative;height:22px}
     .g-axis-line{position:absolute;top:0;left:0;right:0;height:1px;background:var(--bdr)}
     .g-tick{
       position:absolute;top:0;transform:translateX(-50%);
-      font-size:9px;color:var(--t3);font-family:var(--mono);padding-top:5px;
+      font-size:10px;color:var(--t3);font-family:var(--mono);padding-top:6px;
     }
-    .g-tick::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:4px;background:var(--bdr)}
+    .g-tick::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:5px;background:var(--bdr)}
+    .g-time{
+      width:110px;font-size:11px;font-family:var(--mono);
+      color:var(--t2);flex-shrink:0;padding-left:10px;
+      white-space:nowrap;padding-top:5px;
+    }
 
     /* batch colors */
     .bc0{background:linear-gradient(90deg,#6366f1,#8b5cf6)}
@@ -305,27 +325,28 @@
 
     /* ── Table ── */
     .tbl-wrap{overflow-x:auto}
-    table{width:100%;border-collapse:collapse;font-size:12px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
     th{
-      padding:9px 14px;text-align:left;font-size:10px;font-weight:600;
-      color:var(--t3);text-transform:uppercase;letter-spacing:.09em;
+      padding:10px 14px;text-align:left;font-size:11px;font-weight:700;
+      color:var(--t2);text-transform:uppercase;letter-spacing:.07em;
       border-bottom:1px solid var(--bdr);white-space:nowrap;
     }
     td{
-      padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);
-      transition:background var(--tr);vertical-align:middle;
+      padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);
+      transition:background var(--tr);vertical-align:middle;font-size:13px;
     }
-    tr:hover td{background:rgba(255,255,255,.02)}
+    tr:hover td{background:rgba(255,255,255,.03)}
     tr:last-child td{border-bottom:none}
     .bdg{
       display:inline-flex;align-items:center;justify-content:center;
-      min-width:26px;height:20px;border-radius:4px;
-      font-size:10px;font-weight:700;font-family:var(--mono);padding:0 5px;
+      min-width:28px;height:22px;border-radius:5px;
+      font-size:11px;font-weight:700;font-family:var(--mono);padding:0 6px;
     }
-    .bdg-n{background:rgba(99,102,241,.18);color:var(--a3);border:1px solid rgba(99,102,241,.28)}
-    .bdg-f{background:rgba(245,158,11,.18);color:#fbbf24;border:1px solid rgba(245,158,11,.28)}
-    .mono{font-family:var(--mono);font-size:11px}
-    .dur{font-family:var(--mono);font-size:11px;color:var(--t2)}
+    .bdg-n{background:rgba(99,102,241,.2);color:var(--a3);border:1px solid rgba(99,102,241,.32)}
+    .bdg-f{background:rgba(245,158,11,.2);color:#fbbf24;border:1px solid rgba(245,158,11,.32)}
+    .mono{font-family:var(--mono);font-size:12px}
+    .dur{font-family:var(--mono);font-size:12px;color:var(--t2)}
+    .rdf{font-family:var(--mono);font-size:12px;color:#6ee7b7;font-weight:600}
 
     /* calc info strip */
     .ci{
@@ -480,6 +501,8 @@
   </div>
 </div>
 
+<canvas id="matrixCanvas" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.18"></canvas>
+
 <div class="orbs">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
@@ -491,8 +514,7 @@
     <div class="logo">
       <div class="logo-ico">🏭</div>
       <div>
-        <div class="logo-txt">RDタンク計算システム</div>
-        <div class="logo-sub">バッチ消費シミュレーター</div>
+        <div class="logo-txt">RDCALC</div>
       </div>
     </div>
     <div class="hdr-sp"></div>
@@ -518,12 +540,10 @@
           <button class="tab on" id="tab-normal" onclick="switchMode('normal')">
             <div class="tab-ico">📊</div>
             <div class="tab-nm">既存グレード計算</div>
-            <div class="tab-ds">次グレード向け</div>
           </button>
           <button class="tab" id="tab-oldrd" onclick="switchMode('oldrd')">
             <div class="tab-ico">🔄</div>
             <div class="tab-nm">HPグレード計算</div>
-            <div class="tab-ds">前グレード既存向け</div>
           </button>
         </div>
 
@@ -533,8 +553,7 @@
           <div class="opt-row" id="opt-hp-row" onclick="toggleOpt('hp')">
             <div class="opt-chk" id="opt-hp-chk"><span class="opt-chk-mark">✓</span></div>
             <div class="opt-txt">
-              <div class="opt-ttl">次グレードHP（G側先行フィード考慮）</div>
-              <div class="opt-sub">HP CALC モード — G側先行フィード時間を加味した最終計算</div>
+              <div class="opt-ttl">次グレードHP時のラストバッチG側先行フィード時間計算</div>
             </div>
           </div>
           <div class="sub-sec" id="sub-hp">
@@ -549,8 +568,7 @@
           <div class="opt-row" id="opt-prev-row" onclick="toggleOpt('prev')">
             <div class="opt-chk" id="opt-prev-chk"><span class="opt-chk-mark">✓</span></div>
             <div class="opt-txt">
-              <div class="opt-ttl">前グレード既存（フィード量変更考慮）</div>
-              <div class="opt-sub">切替前フィード変更分を1バッチ目から差し引く補正計算</div>
+              <div class="opt-ttl">既存→HP切り替え時のフィード量変更計算</div>
             </div>
           </div>
           <div class="sub-sec" id="sub-prev">
@@ -598,6 +616,10 @@
               <input type="datetime-local" id="startDatetime">
             </div>
           </div>
+          <div class="hint" style="margin-top:10px;line-height:1.7;color:var(--t2);font-size:11px">
+            ⚠️ 2バッチ目以降から計算する場合は、空のタンク容量に<strong>0</strong>を入力してください。<br>
+            切替開始時間に計算関心バッチの使用開始時間を入力する。
+          </div>
         </div>
 
         <div class="div"></div>
@@ -638,27 +660,14 @@
       <div class="sum-card">
         <div class="sum-lbl">バッチ数</div>
         <div class="sum-val gp" id="sumBatches">—</div>
-        <div class="sum-sub" id="sumMode">—</div>
       </div>
       <div class="sum-card">
         <div class="sum-lbl">最終完了日時</div>
         <div class="sum-val go" id="sumFinal" style="font-size:15px;letter-spacing:-.02em">—</div>
-        <div class="sum-sub" id="sumFinalSub">—</div>
       </div>
       <div class="sum-card">
         <div class="sum-lbl">総所要時間</div>
         <div class="sum-val gg" id="sumDuration">—</div>
-        <div class="sum-sub">開始〜最終完了</div>
-      </div>
-    </div>
-
-    <!-- 計算パラメータ -->
-    <div class="card" id="calcInfoCard" style="display:none">
-      <div class="card-hd">
-        <div class="card-ttl"><div class="ttl-ico" style="background:rgba(99,102,241,.2)">🔢</div>計算パラメータ</div>
-      </div>
-      <div class="card-bd" style="padding-top:14px">
-        <div class="ci" id="calcInfoStrip"></div>
       </div>
     </div>
 
@@ -684,10 +693,11 @@
             <thead>
               <tr>
                 <th>バッチ</th>
-                <th>開始日時</th>
-                <th>完了予定日時</th>
+                <th style="color:#6ee7b7">▶ 開始日時</th>
+                <th style="color:#fbbf24">■ 完了予定日時</th>
                 <th>所要時間</th>
                 <th>タンク容量</th>
+                <th>RDフィード量</th>
               </tr>
             </thead>
             <tbody id="resultsTbody"></tbody>
@@ -800,7 +810,7 @@ function addRateChange(timeVal = '', rateVal = '') {
     <div class="row-num">${id}</div>
     <div style="flex:1;display:grid;grid-template-columns:1fr 100px;gap:5px">
       <input type="datetime-local" id="rc-time-${id}" value="${timeVal}" placeholder="変更日時">
-      <input type="number" id="rc-rate-${id}" value="${rateVal}" min="0" step="0.1" placeholder="新レート">
+      <input type="number" id="rc-rate-${id}" value="${rateVal}" min="0" step="5" placeholder="新レート">
     </div>
     <button class="btn-del" title="削除" onclick="removeRateChange(${id})">✕</button>
   `;
@@ -842,11 +852,12 @@ function getRdFeed(feed, rd, ru) {
   return feed * (rd / 100) / (ru / 100);
 }
 
-/** 1バッチ内のレート変更を処理して完了時刻を返す */
+/** 1バッチ内のレート変更を処理して完了時刻とrdFeedセグメントを返す */
 function processBatch(cap, prevTime, rdFeed, feed, rateChanges, solid, rd, ru, feedFn) {
   let c = cap, pt = new Date(prevTime), f = feed, rf = rdFeed;
   if (rf <= 0) throw new Error('RDフィードが0以下です。パラメータを確認してください。');
   let et = new Date(pt.getTime() + (c / rf) * 3600000);
+  const segments = [{ rdFeed: rf }]; // レート変更ごとのrdFeedを追跡
   for (const ch of rateChanges) {
     if (pt < ch.time && et > ch.time) {
       const hrs = (ch.time - pt) / 3600000;
@@ -856,9 +867,10 @@ function processBatch(cap, prevTime, rdFeed, feed, rateChanges, solid, rd, ru, f
       rf = getRdFeed(f, rd, ru);
       if (rf <= 0) throw new Error('レート変更後のRDフィードが0以下です。');
       et = new Date(pt.getTime() + (c / rf) * 3600000);
+      segments.push({ rdFeed: rf });
     }
   }
-  return { endTime: et, feed: f, rdFeed: rf };
+  return { endTime: et, feed: f, rdFeed: rf, segments };
 }
 
 /* ──── 共通バッチループ（モードに応じた feedFn を渡す） ──── */
@@ -877,15 +889,17 @@ function runBatches(p, feedFn) {
   // 1バッチ目
   let cap = batches[0] - sub1;
   if (cap < 0) cap = 0;
+  const rdFeed0 = rdFeed;
   const r0 = processBatch(cap, prev, rdFeed, feed, rateChanges, solid, rd, ru, feedFn);
-  rows.push({ label: '1バッチ目', start: prev, end: r0.endTime, cap: batches[0], effCap: cap, isFinal: false });
+  rows.push({ label: '1バッチ目', start: prev, end: r0.endTime, cap: batches[0], effCap: cap, rdFeedStart: rdFeed0, segments: r0.segments, isFinal: false });
   prev = r0.endTime; feed = r0.feed; rdFeed = r0.rdFeed;
 
   // 2バッチ目以降
   for (let i = 1; i < batches.length; i++) {
     const c = batches[i];
+    const rfStart = rdFeed;
     const r = processBatch(c, prev, rdFeed, feed, rateChanges, solid, rd, ru, feedFn);
-    rows.push({ label: `${i+1}バッチ目`, start: prev, end: r.endTime, cap: c, effCap: c, isFinal: false });
+    rows.push({ label: `${i+1}バッチ目`, start: prev, end: r.endTime, cap: c, effCap: c, rdFeedStart: rfStart, segments: r.segments, isFinal: false });
     prev = r.endTime; feed = r.feed; rdFeed = r.rdFeed;
   }
 
@@ -942,14 +956,16 @@ function calcOldRD(p) {
   }
   if (cap < 0) cap = 0;
 
+  const rdFeed0 = rdFeed;
   const r0 = processBatch(cap, batch1Start, rdFeed, feed, rateChanges, solid, rd, ru, getFeedOldRD);
-  rows.push({ label: '1バッチ目', start: batch1Start, end: r0.endTime, cap: batches[0], effCap: cap, isFinal: false, hasSpecial });
+  rows.push({ label: '1バッチ目', start: batch1Start, end: r0.endTime, cap: batches[0], effCap: cap, rdFeedStart: rdFeed0, segments: r0.segments, isFinal: false, hasSpecial });
   prev = r0.endTime; feed = r0.feed; rdFeed = r0.rdFeed;
 
   for (let i = 1; i < batches.length; i++) {
     const c = batches[i];
+    const rfStart = rdFeed;
     const r = processBatch(c, prev, rdFeed, feed, rateChanges, solid, rd, ru, getFeedOldRD);
-    rows.push({ label: `${i+1}バッチ目`, start: prev, end: r.endTime, cap: c, effCap: c, isFinal: false });
+    rows.push({ label: `${i+1}バッチ目`, start: prev, end: r.endTime, cap: c, effCap: c, rdFeedStart: rfStart, segments: r.segments, isFinal: false });
     prev = r.endTime; feed = r.feed; rdFeed = r.rdFeed;
   }
 
@@ -1022,36 +1038,29 @@ function renderResults(result, startTime, modeLabel) {
   const totalMs   = finalRow.end - startTime;
 
   document.getElementById('sumBatches').textContent  = rows.length - 1;
-  document.getElementById('sumMode').textContent     = modeLabel;
   document.getElementById('sumFinal').textContent    = fmtDate(finalRow.end);
-  document.getElementById('sumFinalSub').textContent = `${modeLabel} — ${rows.length - 1}バッチ完了後`;
   document.getElementById('sumDuration').textContent = fmtDur(totalMs);
-
-  // 計算パラメータ strip
-  const pItems = [
-    { l: 'feed (t/h)',    v: result.feed.toFixed(4) },
-    { l: 'rdFeed (t/h)',  v: result.rdFeed.toFixed(4) },
-    { l: 'MixTank (h)',   v: result.mixTime.toFixed(3) },
-    { l: '1B減少量',       v: result.sub1.toFixed(3) },
-  ];
-  if (result.gRem !== undefined)   pItems.push({ l: 'Gタンク残量',       v: result.gRem.toFixed(3) });
-  if (result.finalTime !== undefined) pItems.push({ l: '最終所要時間(h)', v: result.finalTime.toFixed(3) });
-
-  document.getElementById('calcInfoStrip').innerHTML =
-    pItems.map(p => `<div class="ci-item"><div class="ci-lbl">${p.l}</div><div class="ci-val">${p.v}</div></div>`).join('');
 
   // テーブル
   document.getElementById('resultsTbody').innerHTML = rows.map((r, i) => {
-    const dur     = r.end - r.start;
-    const bdgCls  = r.isFinal ? 'bdg-f' : 'bdg-n';
-    const bdgTxt  = r.isFinal ? '🏁' : (i + 1);
-    const capTxt  = r.cap !== null ? r.cap.toFixed(2) : '—';
+    const dur    = r.end - r.start;
+    const bdgCls = r.isFinal ? 'bdg-f' : 'bdg-n';
+    const bdgTxt = r.isFinal ? '🏁' : (i + 1);
+    const capTxt = r.cap !== null ? r.cap.toFixed(2) : '—';
+    // RDフィード：レート変更前後を「→」で結合
+    let rdfTxt = '—';
+    if (r.segments && r.segments.length > 0) {
+      rdfTxt = r.segments.map(s => s.rdFeed.toFixed(2)).join(' → ') + ' t/h';
+    } else if (r.rdFeedStart !== undefined) {
+      rdfTxt = r.rdFeedStart.toFixed(2) + ' t/h';
+    }
     return `<tr>
-      <td><span class="bdg ${bdgCls}">${bdgTxt}</span><span style="font-size:11px;color:var(--t2);margin-left:6px">${r.label}</span></td>
-      <td class="mono">${fmtDate(r.start)}</td>
-      <td class="mono">${fmtDate(r.end)}</td>
+      <td><span class="bdg ${bdgCls}">${bdgTxt}</span><span style="font-size:12px;color:var(--t2);margin-left:7px">${r.label}</span></td>
+      <td class="mono" style="color:#6ee7b7">${fmtDate(r.start)}</td>
+      <td class="mono" style="color:#fbbf24">${fmtDate(r.end)}</td>
       <td class="dur">${fmtDur(dur)}</td>
       <td class="dur">${capTxt}</td>
+      <td class="rdf">${rdfTxt}</td>
     </tr>`;
   }).join('');
 
@@ -1060,48 +1069,50 @@ function renderResults(result, startTime, modeLabel) {
 
   // 表示切替
   ['emptyCard'].forEach(id => document.getElementById(id).style.display = 'none');
-  ['summaryGrid','calcInfoCard','ganttCard','tableCard'].forEach(id => document.getElementById(id).style.display = '');
+  ['summaryGrid','ganttCard','tableCard'].forEach(id => document.getElementById(id).style.display = '');
 }
 
 /* ===================================================
    ガントチャート
 =================================================== */
 function renderGantt(rows, totalStart, totalEnd) {
-  const totalMs  = totalEnd - totalStart;
+  const totalMs = totalEnd - totalStart;
+
   const rowsHtml = rows.map((r, i) => {
-    const left  = (r.start - totalStart) / totalMs * 100;
-    const width = (r.end   - r.start)   / totalMs * 100;
+    const left  = Math.max(0, (r.start - totalStart) / totalMs * 100);
+    const width = Math.max(0.4, (r.end - r.start) / totalMs * 100);
     const clr   = r.isFinal ? 'bc-final is-final' : `bc${i % 10}`;
-    const shortLabel = r.label.replace('バッチ目', 'B').replace('最終（ミキシング）','最終').replace('最終（HP）','最終HP');
-    const tip = `
-      <div class="g-tip">
-        <div class="g-tip-row"><span>開始</span><strong>${fmtDate(r.start)}</strong></div>
-        <div class="g-tip-row"><span>完了</span><strong>${fmtDate(r.end)}</strong></div>
-        <div class="g-tip-row"><span>所要</span><strong>${fmtDur(r.end - r.start)}</strong></div>
-        ${r.cap !== null ? `<div class="g-tip-row"><span>容量</span><strong>${r.cap.toFixed(2)}</strong></div>` : ''}
-      </div>`;
-    const inner = width > 8 ? shortLabel : '';
+    const shortLabel = r.label
+      .replace('バッチ目', 'B')
+      .replace('最終（ミキシング）', '最終')
+      .replace('最終（HP）', '最終HP');
+    const innerTxt = width > 6 ? shortLabel : '';
+
     return `
       <div class="g-row">
         <div class="g-lbl">${shortLabel}</div>
-        <div class="g-track">
-          <div class="g-seg ${clr}" style="left:${left.toFixed(2)}%;width:${Math.max(width,0.5).toFixed(2)}%">
-            ${inner}${tip}
+        <div class="g-track-col">
+          <div class="g-track">
+            <div class="g-seg ${clr}" style="left:${left.toFixed(2)}%;width:${width.toFixed(2)}%">${innerTxt}</div>
+          </div>
+          <div class="g-timebar" style="position:relative;height:20px">
+            <span class="gt-start" style="position:absolute;left:${left.toFixed(2)}%;transform:translateX(0)">${fmtDateShort(r.start)}</span>
           </div>
         </div>
-        <div class="g-time">${fmtDate(r.end)}</div>
+        <div class="g-time">${fmtDateShort(r.end)}</div>
       </div>`;
   }).join('');
 
-  const ticks = Array.from({length: 7}, (_, i) => {
-    const pct = i / 6 * 100;
-    const t   = new Date(totalStart.getTime() + totalMs * i / 6);
+  const tickCount = 6;
+  const ticks = Array.from({length: tickCount + 1}, (_, i) => {
+    const pct = i / tickCount * 100;
+    const t   = new Date(totalStart.getTime() + totalMs * i / tickCount);
     return `<div class="g-tick" style="left:${pct.toFixed(1)}%">${fmtDateShort(t)}</div>`;
   }).join('');
 
   document.getElementById('ganttWrap').innerHTML = `
-    <div style="min-width:500px;display:flex;flex-direction:column;gap:5px;margin-bottom:10px">${rowsHtml}</div>
-    <div class="g-axis" style="margin-left:72px;position:relative;height:24px">
+    <div class="g-rows">${rowsHtml}</div>
+    <div class="g-axis">
       <div class="g-axis-line"></div>${ticks}
     </div>`;
 }
@@ -1253,6 +1264,51 @@ function initApp() {
     // 未認証：パスワード画面を表示してフォーカス
     setTimeout(() => document.getElementById('pwInput').focus(), 100);
   }
+})();
+
+/* ===================================================
+   マトリックスアニメーション
+=================================================== */
+(function initMatrix() {
+  const canvas = document.getElementById('matrixCanvas');
+  const ctx = canvas.getContext('2d');
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワン2564728390RDTANK%+'.split('');
+  const fontSize = 20;
+  const colSpacing = fontSize * 3;  // 列間隔を3倍にして量を1/3に
+  let cols, drops;
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cols  = Math.floor(canvas.width / colSpacing);
+    drops = Array.from({ length: cols }, () => Math.random() * -80);
+  }
+
+  function draw() {
+    ctx.fillStyle = 'rgba(7,7,26,0.06)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drops.forEach((y, i) => {
+      const ch = chars[Math.floor(Math.random() * chars.length)];
+      const x  = i * colSpacing;
+      // 先頭文字だけ明るく白っぽく
+      if (y > 1) {
+        ctx.fillStyle = '#e0f2fe';
+        ctx.font = `bold ${fontSize}px 'JetBrains Mono',monospace`;
+        ctx.fillText(ch, x, (y - 1) * fontSize);
+      }
+      // 通常文字：緑〜紫をランダム
+      const hue = Math.random() > 0.88 ? 270 : 150;
+      ctx.fillStyle = `hsl(${hue},90%,52%)`;
+      ctx.font = `${fontSize}px 'JetBrains Mono',monospace`;
+      ctx.fillText(ch, x, y * fontSize);
+      if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i] += 0.25;
+    });
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  setInterval(draw, 45);
 })();
 </script>
 
